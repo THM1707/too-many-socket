@@ -6,15 +6,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Message struct {
-	// 2: disconnect noty
-	// 1: normal
-	// 0: connect message
+	// 2: disconnect or connect noty
+	// 1: normal content message
+	// 0: connect message (for client to get its id)
 	Type    int         `json:"type"`
-	Id      int         `json:"id"`
+	Id      string      `json:"id"`
 	Content interface{} `json:"content"`
 }
 
@@ -44,7 +45,7 @@ type Client struct {
 	hub  *Hub
 	conn *websocket.Conn
 	send chan Message
-	id   int
+	id   string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -56,6 +57,7 @@ func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
+		fmt.Println(" -> X <- Client", c.id, "closed")
 	}()
 
 	c.conn.SetReadLimit(maxMessageSize)
@@ -131,10 +133,16 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, roomId string) {
 		return
 	}
 
-	clientNo := len(hub.clients)
-	client := &Client{hub: hub, conn: conn, send: make(chan Message), id: clientNo}
+	u, err := uuid.NewRandom()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	clientId := u.String()
+	client := &Client{hub: hub, conn: conn, send: make(chan Message), id: clientId}
 	client.hub.register <- client
-	fmt.Println("Client", clientNo, "connected on hub", roomId)
+	fmt.Println("<-〇-> Client", client.id, "joined the room")
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

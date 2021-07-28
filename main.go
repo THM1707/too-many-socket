@@ -60,8 +60,6 @@ func main() {
 	flag.Parse()
 	r := mux.NewRouter()
 
-	// routing
-
 	// public hub for any connection in /ws
 	hub := newHub()
 	go hub.run()
