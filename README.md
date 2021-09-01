@@ -35,10 +35,10 @@ client's goroutines reads messages from this channel and writes the messages to
 the websocket. The other client goroutine reads messages from the websocket and
 sends them to the hub.
 
-### Hub 
+### Hub
 
 The code for the `Hub` type is in
-[hub.go](https://github.com/gorilla/websocket/blob/master/examples/chat/hub.go). 
+[hub.go](https://github.com/gorilla/websocket/blob/master/examples/chat/hub.go).
 The application's `main` function starts the hub's `run` method as a goroutine.
 Clients send requests to the hub using the `register`, `unregister` and
 `broadcast` channels.
@@ -54,6 +54,9 @@ The hub handles messages by looping over the registered clients and sending the
 message to the client's `send` channel. If the client's `send` buffer is full,
 then the hub assumes that the client is dead or stuck. In this case, the hub
 unregisters the client and closes the websocket.
+
+The hub save the list of messages and will broadcast them to client the first time
+they connect to hub
 
 ### Client
 
