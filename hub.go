@@ -16,6 +16,9 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	unregister chan *Client
+
+	// Chat history
+	messages []Message
 }
 
 func newHub() *Hub {
@@ -24,6 +27,7 @@ func newHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		messages:   make([]Message, 0),
 	}
 }
 
@@ -33,7 +37,8 @@ func (h *Hub) run() {
 		case client := <-h.register:
 			h.clients[client] = true
 			fmt.Printf("(!) There are %v client(s) in the room\n", len(h.clients))
-			client.conn.WriteJSON(Message{Type: 0, Id: client.id, Content: client.id})
+			client.conn.WriteJSON(Message{Type: 0, Id: client.id, Content: h.messages})
+
 			for c := range h.clients {
 				if c != client {
 					c.conn.WriteJSON(Message{Type: 2, Id: c.id, Content: "connect"})
@@ -48,6 +53,9 @@ func (h *Hub) run() {
 				c.conn.WriteJSON(Message{Type: 2, Id: c.id, Content: "disconnect"})
 			}
 		case message := <-h.broadcast:
+			if message.Type == 1 {
+				h.messages = append(h.messages, message)
+			}
 			for client := range h.clients {
 				select {
 				case client.send <- message:

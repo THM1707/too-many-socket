@@ -13,7 +13,7 @@ import (
 type Message struct {
 	// 2: disconnect or connect noty
 	// 1: normal content message
-	// 0: connect message (for client to get its id)
+	// 0: connect message (for client to get its id and chat history)
 	Type    int         `json:"type"`
 	Id      string      `json:"id"`
 	Content interface{} `json:"content"`
